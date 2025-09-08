@@ -20,14 +20,11 @@ defmodule PostgrexPubsub.Listener do
       Initialize the GenServer in the supervision tree
       """
       def child_spec(_) do
-        Supervisor.Spec.worker(
-          __MODULE__,
-          [
-            unquote(@default_channel),
-            [name: __MODULE__]
-          ],
+        %{
+          id: __MODULE__,
+          start: {__MODULE__, :start_link, [unquote(@default_channel), [name: __MODULE__]]},
           restart: :permanent
-        )
+        }
       end
 
       @doc """
