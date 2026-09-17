@@ -56,21 +56,21 @@ defmodule PostgrexPubsub.Listener do
       @doc """
       Listen for changes
       """
-      def handle_info({:notification, _pid, _ref, _channel_name, payload}, _state) do
+      def handle_info({:notification, _pid, _ref, _channel_name, payload}, state) do
         payload
         |> Jason.decode!()
         |> handle_mutation_event()
 
-        {:noreply, :event_handled}
+        {:noreply, state}
       catch
         type, error ->
           exception = Exception.format(type, error, __STACKTRACE__)
           Logger.error("Listener: #{__MODULE__} failed with error: #{exception}")
-          {:noreply, :event_error}
+          {:noreply, state}
       end
 
-      def handle_info(value, _state) do
-        {:noreply, :event_received}
+      def handle_info(_value, state) do
+        {:noreply, state}
       end
     end
   end
