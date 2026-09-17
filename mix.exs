@@ -6,7 +6,7 @@ defmodule PostgrexPubsub.MixProject do
       app: :postgrex_pubsub,
       name: "Postgrex PubSub",
       description: "A helper for creating and listening to pubsub events from postgres",
-      version: "0.3.0",
+      version: "0.4.0",
       elixir: "~> 1.16",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
