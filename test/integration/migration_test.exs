@@ -15,21 +15,23 @@ defmodule PostgrexPubsub.MigrationIntegrationTest do
     assert function_exists?(PayloadStrategy.function_name())
   end
 
-  test "down/0 fails: DROP TRIGGER is emitted without its ON clause" do
+  test "down/0 rolls the trigger back" do
     install_trigger(PayloadMigration, 5, @trigger)
     assert trigger_exists?(@trigger)
 
-    # Records current behaviour, and is not an endorsement of it.
-    # PostgrexPubsub.delete_trigger/1 (lib/postgrex_pubsub.ex:17) builds
-    # "DROP TRIGGER <name>" with no "ON <table>", which Postgres rejects as a
-    # syntax error, so rolling back either migration macro is impossible.
-    # If delete_trigger/1 is fixed, this test should fail and be rewritten to
-    # assert that the trigger is actually gone.
-    assert_raise Postgrex.Error, ~r/syntax error/, fn ->
-      Ecto.Migrator.down(TestRepo, 5, PayloadMigration, log: false)
-    end
+    Ecto.Migrator.down(TestRepo, 5, PayloadMigration, log: false)
 
-    assert trigger_exists?(@trigger), "trigger survives the failed rollback"
+    refute trigger_exists?(@trigger)
+  end
+
+  test "up/0 after down/0 reinstalls the trigger" do
+    install_trigger(PayloadMigration, 6, @trigger)
+    Ecto.Migrator.down(TestRepo, 6, PayloadMigration, log: false)
+    refute trigger_exists?(@trigger)
+
+    Ecto.Migrator.up(TestRepo, 6, PayloadMigration, log: false)
+
+    assert trigger_exists?(@trigger)
   end
 
   defp function_exists?(name) do

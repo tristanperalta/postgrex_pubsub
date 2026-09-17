@@ -45,11 +45,10 @@ defmodule PostgrexPubsub.IntegrationCase do
   end
 
   @doc """
-  Removes a trigger using correct SQL.
+  Removes a trigger, tolerating one that was never installed.
 
-  The library's own `delete_trigger/1` cannot be used here: it emits
-  `DROP TRIGGER <name>` with no `ON <table>`, which Postgres rejects.
-  See the rollback test in `test/integration/migration_test.exs`.
+  Used to guarantee a known starting state; rolling back through the library's
+  own migration `down/0` is covered by `test/integration/migration_test.exs`.
   """
   def drop_trigger(trigger_name) do
     TestRepo.query!("DROP TRIGGER IF EXISTS #{trigger_name} ON widgets")

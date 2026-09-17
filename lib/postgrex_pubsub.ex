@@ -13,8 +13,8 @@ defmodule PostgrexPubsub do
       EXECUTE PROCEDURE #{function_name}();"
   end
 
-  def delete_trigger(trigger_name) do
-    Ecto.Migration.execute("DROP TRIGGER #{trigger_name}")
+  def delete_trigger(trigger_name, table_name) do
+    Ecto.Migration.execute("DROP TRIGGER #{trigger_name} ON #{table_name}")
   end
 
   defmodule PayloadStrategy do
@@ -64,7 +64,7 @@ defmodule PostgrexPubsub do
     def delete_broadcast_trigger_for_table(table_name) do
       table_name
       |> get_trigger_name()
-      |> PostgrexPubsub.delete_trigger()
+      |> PostgrexPubsub.delete_trigger(table_name)
     end
   end
 
@@ -110,7 +110,7 @@ defmodule PostgrexPubsub do
   def delete_broadcast_trigger_for_table(table_name) do
     table_name
     |> get_trigger_name()
-    |> PostgrexPubsub.delete_trigger()
+    |> PostgrexPubsub.delete_trigger(table_name)
   end
  end
 end
