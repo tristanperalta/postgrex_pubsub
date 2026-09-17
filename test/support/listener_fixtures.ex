@@ -35,6 +35,14 @@ defmodule PostgrexPubsub.ListenerFixtures do
       do: PostgrexPubsub.ListenerFixtures.Relay.forward(__MODULE__, event)
   end
 
+  defmodule FixedChannelListener do
+    @moduledoc "Pins its channel explicitly, ignoring the application setting."
+    use PostgrexPubsub.Listener, repo: PostgrexPubsub.TestRepo, channel: "fixed_channel"
+
+    def handle_mutation_event(event),
+      do: PostgrexPubsub.ListenerFixtures.Relay.forward(__MODULE__, event)
+  end
+
   defmodule RaisingListener do
     @moduledoc "Handler that always raises, to exercise the catch clause."
     use PostgrexPubsub.Listener, repo: PostgrexPubsub.TestRepo

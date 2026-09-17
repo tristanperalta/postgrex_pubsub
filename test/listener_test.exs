@@ -3,6 +3,7 @@ defmodule PostgrexPubsub.ListenerTest do
 
   import ExUnit.CaptureLog
 
+  alias PostgrexPubsub.ListenerFixtures.FixedChannelListener
   alias PostgrexPubsub.ListenerFixtures.PayloadListener
   alias PostgrexPubsub.ListenerFixtures.RaisingListener
   alias PostgrexPubsub.ListenerFixtures.Relay
@@ -21,6 +22,49 @@ defmodule PostgrexPubsub.ListenerTest do
     test "starts on the default channel, registered by module name" do
       assert %{start: {PayloadListener, :start_link, ["pg_mutations", [name: PayloadListener]]}} =
                PayloadListener.child_spec([])
+    end
+  end
+
+  describe "channel resolution" do
+    setup do
+      original = Application.get_env(:postgrex_pubsub, :channel)
+
+      on_exit(fn ->
+        case original do
+          nil -> Application.delete_env(:postgrex_pubsub, :channel)
+          value -> Application.put_env(:postgrex_pubsub, :channel, value)
+        end
+      end)
+
+      :ok
+    end
+
+    test "follows the configured channel, matching the channel the trigger publishes on" do
+      Application.put_env(:postgrex_pubsub, :channel, "custom_channel")
+
+      assert PayloadListener.default_channel() == "custom_channel"
+      assert PayloadListener.default_channel() == PostgrexPubsub.default_channel()
+    end
+
+    test "child_spec/1 picks the configured channel up at runtime" do
+      Application.put_env(:postgrex_pubsub, :channel, "custom_channel")
+
+      assert %{start: {_, :start_link, ["custom_channel", _]}} = PayloadListener.child_spec([])
+    end
+
+    test "falls back to pg_mutations when unconfigured" do
+      Application.delete_env(:postgrex_pubsub, :channel)
+
+      assert PayloadListener.default_channel() == "pg_mutations"
+    end
+
+    test "an explicit :channel option wins over the application setting" do
+      Application.put_env(:postgrex_pubsub, :channel, "ignored")
+
+      assert FixedChannelListener.default_channel() == "fixed_channel"
+
+      assert %{start: {_, :start_link, ["fixed_channel", _]}} =
+               FixedChannelListener.child_spec([])
     end
   end
 

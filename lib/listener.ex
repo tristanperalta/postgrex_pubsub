@@ -3,14 +3,10 @@ defmodule PostgrexPubsub.Listener do
   A macro for creating a simple listener for postgres changes
   """
 
-  # TODO make this configurable
-  @default_channel "pg_mutations"
-
   defmacro __using__(opts) do
-    repo_module =
-      opts
-      |> Map.new()
-      |> Map.get(:repo)
+    opts = Map.new(opts)
+    repo_module = Map.get(opts, :repo)
+    channel = Map.get(opts, :channel)
 
     quote do
       use GenServer
@@ -22,15 +18,27 @@ defmodule PostgrexPubsub.Listener do
       def child_spec(_) do
         %{
           id: __MODULE__,
-          start: {__MODULE__, :start_link, [unquote(@default_channel), [name: __MODULE__]]},
+          start: {__MODULE__, :start_link, [default_channel(), [name: __MODULE__]]},
           restart: :permanent
         }
       end
 
       @doc """
+      The channel this listener subscribes to.
+
+      Resolved at runtime so it always matches the channel the trigger SQL
+      publishes on, which `PostgrexPubsub.default_channel/0` derives from the
+      `:postgrex_pubsub, :channel` application setting. A `:channel` option
+      given to `use PostgrexPubsub.Listener` overrides both.
+      """
+      def default_channel do
+        unquote(channel) || PostgrexPubsub.default_channel()
+      end
+
+      @doc """
       Initialize the activity GenServer
       """
-      @spec start_link([String.t()], [any]) :: {:ok, pid}
+      @spec start_link(String.t(), [any]) :: {:ok, pid}
       def start_link(channel, otp_opts \\ []),
         do: GenServer.start_link(__MODULE__, channel, otp_opts)
 
