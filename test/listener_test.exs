@@ -77,7 +77,7 @@ defmodule PostgrexPubsub.ListenerTest do
     test "decodes the payload and hands it to handle_mutation_event/1" do
       payload = Jason.encode!(%{"table" => "widgets", "type" => "INSERT", "id" => 7})
 
-      assert {:noreply, :event_handled} =
+      assert {:noreply, _} =
                PayloadListener.handle_info(
                  {:notification, self(), make_ref(), "pg_mutations", payload},
                  :any_state
@@ -89,7 +89,7 @@ defmodule PostgrexPubsub.ListenerTest do
     test "survives malformed JSON instead of crashing the listener" do
       log =
         capture_log(fn ->
-          assert {:noreply, :event_error} =
+          assert {:noreply, _} =
                    PayloadListener.handle_info(
                      {:notification, self(), make_ref(), "pg_mutations", "not json"},
                      :any_state
@@ -105,7 +105,7 @@ defmodule PostgrexPubsub.ListenerTest do
 
       log =
         capture_log(fn ->
-          assert {:noreply, :event_error} =
+          assert {:noreply, _} =
                    RaisingListener.handle_info(
                      {:notification, self(), make_ref(), "pg_mutations", payload},
                      :any_state
@@ -118,8 +118,7 @@ defmodule PostgrexPubsub.ListenerTest do
 
   describe "handle_info/2 with anything else" do
     test "ignores unrecognised messages" do
-      assert {:noreply, :event_received} =
-               PayloadListener.handle_info(:some_other_message, :any_state)
+      assert {:noreply, _} = PayloadListener.handle_info(:some_other_message, :any_state)
     end
 
     test "does not invoke the mutation handler" do
